@@ -1,4 +1,4 @@
-package module2-bea;
+package module2_bea;
 
 public class Schedule {
     

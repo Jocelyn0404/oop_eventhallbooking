@@ -1,4 +1,4 @@
-package module1-jo;
+package module1_jo;
 
 public class User {
     protected String userId, name, email, password;
