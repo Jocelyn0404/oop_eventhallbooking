@@ -24,6 +24,11 @@ public class User {
         System.out.println("Profile updated successfully.");
     }
 
+    public void setPassword(String newPassword) {
+        this.password = newPassword;
+    }
+
+
     public String getUserId(){
         return userId;
     }
