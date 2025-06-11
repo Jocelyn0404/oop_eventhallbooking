@@ -1,5 +1,3 @@
-package module3_abhi;
-
 public class Payment {
    private int paymentId;
     private int bookingId;
