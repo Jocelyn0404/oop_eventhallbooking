@@ -5,6 +5,10 @@ public class EventHallBookingSystem {
     static List<Hall> halls = new ArrayList<>();
     static List<Booking> bookings = new ArrayList<>();
     static List<Payment> payments = new ArrayList<>();
+    static List<Notification> notifications = new ArrayList<>();
+    static List<Feedback> feedbackList = new ArrayList<>();
+    static Authentication auth = new Authentication();
+    static Report report = new Report();
 
     public static void main(String[] args) {
         initData();
@@ -15,8 +19,14 @@ public class EventHallBookingSystem {
             System.out.println("2. Admin Login");
             System.out.println("3. Exit");
             System.out.print("Choose an option: ");
-            mainChoice = scanner.nextInt();
-            scanner.nextLine();
+           try {
+                mainChoice = scanner.nextInt();
+                scanner.nextLine();
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine();
+                mainChoice = -1;
+            }
 
             switch (mainChoice) {
                 case 1: customerLogin(); break;
@@ -39,25 +49,41 @@ public class EventHallBookingSystem {
         String email = scanner.nextLine();
         System.out.print("Enter Password: ");
         String password = scanner.nextLine();
-        currentUser = new User(1, name, email, password);
-        System.out.println("Login successful. Welcome, " + currentUser.getName() + "!");
+        if (auth.login(name, email, password)) {
+            currentUser = new User(1, name, email, password);
+            System.out.println("Login successful. Welcome, " + currentUser.getName() + "!");
+            customerMenu();
+        } else {
+            System.out.println("Login failed. Please try again.");
+        }
+    }
+        static void customerMenu() {
         int choice;
         do {
             System.out.println("\n====== CUSTOMER MENU ======");
             System.out.println("1. View Available Halls");
             System.out.println("2. Book a Hall");
             System.out.println("3. Make Payment");
-            System.out.println("4. Logout");
+            System.out.println("4. Submit feedback");
+            System.out.println("5. Logout");
             System.out.print("Choose an option: ");
-            choice = scanner.nextInt(); scanner.nextLine();
+            try {
+                choice = scanner.nextInt();
+                scanner.nextLine();
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine();
+                choice = -1;
+            }
             switch (choice) {
                 case 1: viewHalls(); break;
                 case 2: bookingMenu(); break;
                 case 3: paymentMenu(); break;
-                case 4: currentUser.logout(); currentUser = null; break;
+                case 4: feedbackMebu();break;
+                case 5: currentUser.logout(); currentUser = null; break;
                 default: System.out.println("Invalid option.");
             }
-        } while (choice != 4);
+        } while (choice != 5);
     }
 
     static void adminLogin() {
@@ -65,25 +91,38 @@ public class EventHallBookingSystem {
         String email = scanner.nextLine();
         System.out.print("Enter Admin Password: ");
         String password = scanner.nextLine();
+        
         if (adminUser.getEmail().equals(email) && adminUser.getPassword().equals(password)) {
             System.out.println("Admin login successful. Welcome Admin!");
+            
             int choice;
             do {
                 System.out.println("\n====== ADMIN MENU ======");
                 System.out.println("1. View All Bookings");
                 System.out.println("2. Approve/Reject Booking");
-                System.out.println("3. Logout");
+                System.out.println("3. view Feedback");
+                System.out.println("4. view Report");
+                System.out.println("5. Logout");
                 System.out.print("Choose an option: ");
-                choice = scanner.nextInt(); scanner.nextLine();
+                
+                while (!scanner.hasNextInt()) {
+                    System.out.print("Invalid input. Please enter a number: ");
+                    scanner.next();
+                }
+                choice = scanner.nextInt();
+                scanner.nextLine();
+                
                 switch (choice) {
                     case 1: viewAllBookings(); break;
                     case 2: approveOrRejectBooking(); break;
-                    case 3: System.out.println("Logged out from Admin."); break;
-                    default: System.out.println("Invalid option.");
+                    case 3: viewFeedbacks(); break;
+                    case 4: report.displayBookingSummary(bookings);break;
+                    case 5: System.out.println("Logged out from Admin."); break;
+                    default: System.out.println("Invalid option.Please choose between 1 and 5.");
                 }
-            } while (choice != 3);
+            } while (choice != 5);
         } else {
-            System.out.println("Invalid admin credentials.");
+            System.out.println("Admin login failed.Invalid admin credentials.");
         }
     }
 
@@ -94,13 +133,15 @@ public class EventHallBookingSystem {
 
     static void bookingMenu() {
         System.out.print("Enter Hall ID to book: ");
-        int hallId = scanner.nextInt(); scanner.nextLine();
+        int hallId = scanner.nextInt(); 
+        scanner.nextLine();
         System.out.print("Enter Date (yyyy-mm-dd): ");
         String date = scanner.nextLine();
         System.out.print("Enter Start Time (HH:mm): ");
         String start = scanner.nextLine();
         System.out.print("Enter End Time (HH:mm): ");
         String end = scanner.nextLine();
+        
         for (Booking b : bookings) {
             if (b.getHallId() == hallId && b.getDate().equals(date) && timeOverlaps(b.getStartTime(), b.getEndTime(), start, end)) {
                 System.out.println("The hall is already booked during this time.");
@@ -168,14 +209,16 @@ static void paymentMenu() {
     double total = hall.getPricePerHour() * duration;
     total = Math.round(total * 100.0) / 100.0; // round to 2 decimal places
 
-    Payment p = new Payment(payments.size() + 1, id, total, new Date(), "Credit Card");
-    payments.add(p);
+    System.out.println("Total amount to pay: RM" + total);
+    System.out.print("Enter payment method (Card/FPX): ");
+    String method = scanner.nextLine();
+    
+    Payment payment = new Payment(payments.size() + 1, b.getBookingId(), total, new Date(), method);
+    payments.add(payment);
 
-    System.out.printf("Payment of RM%.2f received successfully.\n", total);
+    System.out.println("Payment successful!");
+    System.out.println(payment);
 }
-
- 
-
     static void viewAllBookings() {
         for (Booking b : bookings) System.out.println(b);
     }
@@ -236,4 +279,42 @@ static void paymentMenu() {
 }
 
 }
+static void feedbackMenu() {
+        System.out.println("Enter your feedback message: ");
+        String message = scanner.nextLine();
+        System.out.println("Enter rating (1 to 5): ");
+        int rating = 0;
+
+        try {
+            rating = scanner.nextInt();
+            scanner.nextLine();
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid input. Rating set to 0.");
+            scanner.nextLine();
+        }
+
+        Feedback fb = new Feedback(generateFeedbackId(), currentUser.getUserId(), message, rating);
+        feedbackList.add(fb);
+        fb.submitFeedback();
+    }
+
+    static int generateFeedbackId() {
+        return feedbackList.size() + 1;
+    }
+
+    static void viewFeedbacks() {
+        if (feedbackList.isEmpty()) {
+            System.out.println("No feedback submitted yet.");
+        } else {
+            System.out.println("\n====== All Feedback ======");
+            for (Feedback fb : feedbackList) {
+                System.out.println("User ID: " + fb.getUserId());
+                System.out.println("Rating: " + fb.getRating());
+                System.out.println("Message: " + fb.getMessage());
+                System.out.println("---------------------------");
+            }
+        }
+    }
+}
+
 
