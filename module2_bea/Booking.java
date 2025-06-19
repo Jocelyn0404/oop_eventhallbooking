@@ -7,6 +7,7 @@ class Booking {
     private String startTime;
     private String endTime;
     private String status;
+    private Schedule schedule;
 
     public Booking(int bookingId, int userId, int hallId, String date, String startTime, String endTime, String status) {
         this.bookingId = bookingId;
