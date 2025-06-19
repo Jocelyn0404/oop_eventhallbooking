@@ -1,4 +1,3 @@
-package module2_bea;
 // === 3. Hall ===
 class Hall {
     private int hallId;
